@@ -10,18 +10,26 @@ First I need a way of listing tickers and their days to earnings call
 https://finviz.com/screener.ashx?v=111 has something but is paid information (Filters->Descriptive->Earnings Date)
 """
 import logging
-import os
 import time
+from html.parser import HTMLParser
 
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from html.parser import HTMLParser
 
 logger = logging.getLogger(__name__)
 FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 YAHOO_FINANCE = "https://finance.yahoo.com/calendar/earnings?"
+EMPTY_DF = pd.DataFrame(columns=[
+            "ticker",
+            "company",
+            "call_time",
+            "eps_estimate",
+            "reported_estimate",
+            "surprise",
+            "report_date",
+        ])
 
 
 class MyHTMLParser(HTMLParser):
@@ -102,7 +110,6 @@ class MyHTMLParser(HTMLParser):
                 {
                     "ticker": self.ticker,
                     "company": self.company,
-                    #"date": self.date,
                     "call_time": self.call_time,
                     "eps_estimate": self.eps_estimated,
                     "reported_estimate": self.reported_eps,
@@ -145,13 +152,25 @@ def get_chrome_driver():
 driver = get_chrome_driver()
 
 
-def get_df(date):
+def get_df_one_date(date, size=100):
     """
     Get a dataframe wtih the info shown in yahoo finance
 
     https://finance.yahoo.com/calendar/earnings?day=2021-02-26
     """
-    url = YAHOO_FINANCE + f"day={date}"
+    df = EMPTY_DF
+    offset = 0
+    while True:
+        temp_df = _get_df_for_date_and_offset(date, offset, size)
+        df = df.append(temp_df).reset_index(drop=True)
+        if temp_df.empty or temp_df.shape[0] < size:
+            break
+        offset += size
+    return df
+
+
+def _get_df_for_date_and_offset(date, offset, size):
+    url = YAHOO_FINANCE + f"day={date}&size={size}&offset={offset}"
     print(url)
     driver.get(url)
     time.sleep(3)
@@ -160,9 +179,18 @@ def get_df(date):
 
     parser.feed(source)
     df = parser.df
+    if df.empty:
+        df = EMPTY_DF
     df.loc[:, "report_date"] = date
     return parser.df
 
 
-if __name__ == "__main__":
-    df = get_df('2021-02-26')
+def get_earnings(start_date, end_date):
+    dfs = []
+    for date in pd.date_range(start_date, end_date):
+        df = get_df_one_date(f"{date.date()}")
+        dfs.append(df)
+
+    df = pd.concat(dfs).reset_index(drop=True)
+    return df
+
