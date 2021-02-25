@@ -19,6 +19,8 @@ from selenium.webdriver.chrome.options import Options
 from html.parser import HTMLParser
 
 logger = logging.getLogger(__name__)
+FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
+logging.basicConfig(format=FORMAT)
 YAHOO_FINANCE = "https://finance.yahoo.com/calendar/earnings?"
 
 
@@ -154,10 +156,11 @@ def get_df(date):
     driver.get(url)
     time.sleep(3)
     source = driver.page_source
-    print(source)
     parser = MyHTMLParser()
 
     parser.feed(source)
+    df = parser.df
+    df.loc[:, "report_date"] = date
     return parser.df
 
 
