@@ -12,7 +12,7 @@ Same problem with chromdriver. Followed instructions from Oct 25, 2019.
 * click on "chromedriver_mac64.zip" (downloads the file)
 * open the zip
 * right click on the chromedriver -> open with terminal (accept)
-* move chromedriver to auction folder
+* move chromedriver to /usr/lobal/bin/
 
 Feb 7, 2020,
 Same problem with chromdriver. Followed instructions from Oct 25, 2019. 

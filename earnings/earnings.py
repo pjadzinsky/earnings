@@ -136,7 +136,7 @@ def get_chrome_driver():
     chrome_options.add_argument("--headless")
     chrome_options.binary_location = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
 
-    driver = webdriver.Chrome(executable_path=os.path.abspath("chromedriver"), chrome_options=chrome_options)
+    driver = webdriver.Chrome(chrome_options=chrome_options)
     return driver
 
 
